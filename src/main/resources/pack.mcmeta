@@ -1,0 +1,6 @@
+{
+    "pack": {
+        "description": "${mod_id} assets",
+        "pack_format": 3
+    }
+}

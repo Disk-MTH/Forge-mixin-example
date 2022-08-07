@@ -1,0 +1,117 @@
+buildscript {
+    repositories {
+        maven {
+            url = 'https://files.minecraftforge.net/maven'
+        }
+        maven {
+            url = "https://repo.spongepowered.org/maven"
+        }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:3.+'
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'eclipse'
+
+version = mod_version
+group = mod_group
+archivesBaseName = mod_name.replace('${minecraft_version}', minecraft_version)
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+
+minecraft {
+    mappings channel: mappings_channel, version: mappings_version
+
+    runs {
+        client {
+            workingDirectory project.file('run/client')
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', 'debug'
+            property 'fml.coreMods.load', mixin_loader.replace('${mod_group}', mod_group).replace('${mod_id}', mod_id)
+        }
+
+        server {
+			workingDirectory project.file('run/server')
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', 'debug'
+            property 'fml.coreMods.load', mixin_loader.replace('${mod_group}', mod_group).replace('${mod_id}', mod_id)
+        }
+    }
+}
+
+repositories {
+    maven {
+        url = 'https://repo.spongepowered.org/maven'
+    }
+}
+
+configurations {
+    embed
+    compile.extendsFrom(embed)
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    embed 'org.spongepowered:mixin:0.8.5'
+}
+
+mixin {
+    add sourceSets.main, mixin_refmap.replace('${mod_id}', mod_id)
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'mod_id': mod_id,
+               'mod_name': mod_name.replace('${minecraft_version}', minecraft_version),
+               'mod_description': mod_description.replace('${minecraft_version}', minecraft_version),
+               'mod_version': mod_version,
+               'minecraft_version': minecraft_version,
+               'mod_url': mod_url,
+               'mod_updateUrl': mod_updateUrl,
+               'mod_authorList': mod_authorList,
+               'mod_credits': mod_credits,
+               'mod_logoFile': mod_logoFile.replace('${mod_id}', mod_id),
+               'mod_screenshots': mod_screenshots,
+               'mod_dependencies': mod_dependencies
+
+        include 'pack.mcmeta'
+        expand 'mod_id': mod_id
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+        exclude 'pack.mcmeta'
+    }
+}
+
+jar {
+    from {
+        configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "LICENSE.txt", "META-INF/MANIFSET.MF", "META-INF/maven/**", "META-INF/*.RSA", "META-INF/*.SF"
+    }
+
+    manifest {
+        attributes([
+                "Specification-Title"     : mod_name.replace('${minecraft_version}', minecraft_version),
+                "Specification-Vendor"    : mod_authorList,
+                "Specification-Version"   : mod_version,
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "FMLCorePlugin": mixin_loader.replace('${mod_group}', mod_group).replace('${mod_id}', mod_id),
+                "FMLCorePluginContainsFMLMod": "false",
+                "ForceLoadAsMod": "true",
+                "TweakClass": "org.spongepowered.asm.launch.MixinTweaker",
+                "TweakOrder": "0",
+                "MixinConfigs": mixin_config.replace('${mod_id}', mod_id)
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')

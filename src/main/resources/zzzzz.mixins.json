@@ -1,0 +1,11 @@
+{
+  "compatibilityLevel": "JAVA_8",
+  "minVersion": "0.8.5",
+  "package": "xxxxx.yyyyy.zzzzz.mixins",
+  "refmap": "zzzzz-refmap.json",
+  "mixins": [],
+  "client": [
+    "client.MixinMinecraft"
+  ],
+  "server": []
+}
